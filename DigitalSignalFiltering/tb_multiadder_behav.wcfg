@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_multiadder_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="tb_multiadder" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="1,000,000 ps"></ZoomStartTime>
+      <ZoomEndTime time="1,000,006 ps"></ZoomEndTime>
+      <Cursor1Time time="1,000,000 ps"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="185"></NameColumnWidth>
+      <ValueColumnWidth column_width="72"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="3" />
+   <wvobject fp_name="/tb_multiadder/dataouts" type="array">
+      <obj_property name="ElementShortName">dataouts[13:0]</obj_property>
+      <obj_property name="ObjectShortName">dataouts[13:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_multiadder/numbNb" type="other">
+      <obj_property name="ElementShortName">numbNb</obj_property>
+      <obj_property name="ObjectShortName">numbNb</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_multiadder/numblog2NFIFO" type="other">
+      <obj_property name="ElementShortName">numblog2NFIFO</obj_property>
+      <obj_property name="ObjectShortName">numblog2NFIFO</obj_property>
+   </wvobject>
+</wave_config>
