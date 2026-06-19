@@ -3,10 +3,10 @@ clear all; close all;
 % Parametri del segnale originale (da TestGenerateSignal)
 Nb    = 8;
 tclk  = 20e-9;
-NFIFO_values = [32, 64, 128];
+NFIFO_values = [32, 64, 128, 256];
 
 mypath = 'C:/Users/Nadim/Desktop/FPGA_DigitalSignalFiltering/DigitalSignalFiltering/DigitalSignalFiltering.sim/sim_1/behav/xsim/';
-filenames = {'output_NFIFO32.txt', 'output_NFIFO64.txt', 'output_NFIFO128.txt'};
+filenames = {'output_NFIFO32.txt', 'output_NFIFO64.txt', 'output_NFIFO128.txt', 'output_NFIFO256.txt'};
 
 % Carica il segnale originale da TestGenerateSignal
 FS   = 256;
@@ -32,11 +32,11 @@ signal_rms   = rms(ysignal_pure - mean(ysignal_pure));
 SNR_dB = zeros(1,3);
 noise_rms = zeros(1,3);
 
-figure('Name','Confronto output filtro per NFIFO=32/64/128');
+figure('Name','Confronto output filtro per NFIFO=32/64/128/256');
 hold on; grid on;
-colors = ['r','g','b'];
+colors = ['r','g','b', 'm'];
 
-for i = 1:3
+for i = 1:4
     % Leggi file VIVADO
     d = importdata(strcat(mypath, filenames{i}));
     y = bin2dec(num2str(d));
@@ -60,13 +60,13 @@ end
 plot(t_vhd, ysignal_pure, '--k', 'LineWidth', 2, 'DisplayName', 'Segnale puro');
 xlabel('Time [s]'); ylabel('Digital [-]');
 legend('show', 'Location', 'southeast'); 
-title('Output filtro VIVADO vs segnale puro');
+title('Output VIVADO filter vs pure signal');
 
 % Tabella riassuntiva SNR
 fprintf('\nTABELLA SNR\n');
 fprintf('%-10s %-15s %-15s %-20s\n', 'NFIFO', 'Banda filtro', 'Noise RMS', 'SNR [dB]');
 fs = 1/tclk;
-for i = 1:3
+for i = 1:4
     fcutoff = fs / (2 * NFIFO_values(i));
     fprintf('%-10d %-15.0f %-15.4f %-20.2f\n', ...
     NFIFO_values(i), fs/(2*NFIFO_values(i)), noise_rms(i), SNR_dB(i));
@@ -77,7 +77,7 @@ saveas(gcf, 'confronto_NFIFO_all.png');
 
 figure('Name','Frequency Response');
 fs = 1/tclk;
-for i = 1:3
+for i = 1:4
     NFIFO = NFIFO_values(i);
     fcutoff = 0.5*fs/NFIFO;
     b = fir1(NFIFO, fcutoff/(0.5*fs), 'low');
@@ -95,15 +95,15 @@ end
 subplot(2,1,1); legend('show');
 saveas(gcf, 'frequency_response_all.png');
 
-%% Plot evoluzione rumore residuo (stima diretta della fondamentale dai dati)
+% Plot evoluzione rumore residuo
 figure('Name','Residual Noise Evolution');
 hold on; grid on;
-colors_noise = ['r','g','b'];
+colors_noise = ['r','g','b', 'm'];
 
 c_ref = cos(2*pi*f0*t_vhd);
 s_ref = sin(2*pi*f0*t_vhd);
 
-for i = 1:3
+for i = 1:4
     NFIFO = NFIFO_values(i);
 
     d = importdata(strcat(mypath, filenames{i}));
@@ -111,7 +111,7 @@ for i = 1:3
     y = double(y(1:N_vhd))';
     y_ac = y - mean(y);
 
-    % Stima ampiezza e fase REALI presenti nell'uscita (Fourier projection)
+    % Stima ampiezza e fase reali presenti nell'uscita (Fourier projection)
     a_coef = 2/length(y_ac) * sum(y_ac .* c_ref);
     b_coef = 2/length(y_ac) * sum(y_ac .* s_ref);
     fundamental_fit = a_coef*c_ref + b_coef*s_ref;
@@ -129,3 +129,29 @@ lgd = legend('show');
 lgd.Location = 'best';
 
 saveas(gcf, 'noise_evolution.png');
+
+% Verifica empirica del ritardo di gruppo (metodo: fase della fondamentale)
+fprintf('\nVERIFICA RITARDO DI GRUPPO\n');
+fprintf('%-10s %-20s %-20s\n', 'NFIFO', 'Teorico [campioni]', 'Misurato [campioni]');
+
+c_ref = cos(2*pi*f0*t_vhd);
+s_ref = sin(2*pi*f0*t_vhd);
+
+for i = 1:length(NFIFO_values)
+    NFIFO = NFIFO_values(i);
+    
+    d = importdata(strcat(mypath, filenames{i}));
+    y = bin2dec(num2str(d));
+    y = double(y(1:N_vhd))';
+    y_ac = y - mean(y);
+    
+    a_coef = 2/length(y_ac) * sum(y_ac .* c_ref);
+    b_coef = 2/length(y_ac) * sum(y_ac .* s_ref);
+    phi = atan2(a_coef, b_coef);
+    
+    delay_time = mod(-phi/(2*pi*f0), T0);   % avvolge in [0, T0)
+    delay_theoretical = NFIFO/2;
+    delay_measured = delay_time / tclk;     % converti secondi → campioni
+    
+    fprintf('%-10d %-20d %-20.1f\n', NFIFO, delay_theoretical, delay_measured);
+end
